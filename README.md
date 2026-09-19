@@ -156,7 +156,7 @@ The system is designed to run locally and offline after its dependencies and Fab
 
 ## Installation
 
-The commands below assume the repository is located at `C:\Users\agraw\Music\PS02\pramaan` on Windows and `/mnt/c/Users/agraw/Music/PS02/pramaan` inside WSL2.
+The commands below assume you have opened a terminal at the repository root.
 
 ---
 
@@ -165,10 +165,7 @@ The commands below assume the repository is located at `C:\Users\agraw\Music\PS0
 Open your **Ubuntu Terminal**:
 
 ```bash
-# 1. Navigate to the repository directory
-cd /mnt/c/Users/agraw/Music/PS02/pramaan
-
-# 2. Run the automated Fabric setup script
+# Run the automated Fabric setup script from the repository root
 chmod +x fabric/scripts/setup_fabric.sh
 bash fabric/scripts/setup_fabric.sh
 ```
@@ -181,10 +178,10 @@ bash fabric/scripts/setup_fabric.sh
 In the Ubuntu Terminal:
 
 ```bash
-cd /mnt/c/Users/agraw/Music/PS02/pramaan/fabric_adapter
+cd fabric_adapter
 
-# Install dependencies (using --no-bin-links for NTFS mount compatibility)
-npm install --no-bin-links
+# Install dependencies
+npm install
 
 # Start the adapter server (runs on port 3000)
 npm start
@@ -198,10 +195,7 @@ You will see: `Fabric Gateway Adapter running on port 3000`.
 Open **Windows PowerShell**:
 
 ```powershell
-# 1. Navigate to the project root
-cd C:\Users\agraw\Music\PS02\pramaan
-
-# 2. Create and activate a Python virtual environment
+# From the repository root, create and activate a Python virtual environment
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 
@@ -220,7 +214,6 @@ Backend API will be live at `http://127.0.0.1:8000`.
 Open a **new Windows PowerShell window**:
 
 ```powershell
-cd C:\Users\agraw\Music\PS02\pramaan
 .\venv\Scripts\Activate.ps1
 
 # Start the user interface
@@ -235,6 +228,74 @@ Your browser will automatically open `http://localhost:8501`.
 Once the services are running, use the Streamlit dashboard at `http://localhost:8501`. The FastAPI service is available at `http://127.0.0.1:8000`; its interactive API documentation is at `http://127.0.0.1:8000/docs`.
 
 The dashboard provides sender, recipient, dashboard, and investigator workflows. Fabric, the gateway adapter, the FastAPI service, and Streamlit must remain running for the complete end-to-end flow.
+
+### Quick Smoke Test
+
+Use four terminal windows and leave each long-running service open:
+
+1. **Fabric:** run the setup command from the installation section. Docker Desktop must be running and integrated with your WSL distribution.
+2. **Fabric adapter:** from `fabric_adapter`, run `npm start` and confirm that it prints `Fabric Gateway Adapter running on port 3000`.
+3. **FastAPI:** from the repository root with the virtual environment activated, run `uvicorn api.main:app --port 8000`.
+4. **Dashboard:** from the repository root with the virtual environment activated, run `streamlit run app.py`.
+
+Check the API before opening the dashboard:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+Expected response:
+
+```text
+status
+------
+ok
+```
+
+Open `http://127.0.0.1:8000/docs` to try the API interactively, or use the dashboard at `http://localhost:8501`.
+
+### Verify Document Encryption
+
+Prepare any small PDF, then call the encryption endpoint from PowerShell. Replace `sample.pdf` with the path to your test PDF:
+
+```powershell
+curl.exe -X POST http://127.0.0.1:8000/documents/encrypt -F "file=@sample.pdf"
+```
+
+A successful response contains a `document_id`, a SHA-256 `document_hash`, and the message `Document encrypted successfully once using AES-256-GCM.` The same operation is available in the dashboard under **Sender**: upload the PDF and click **Encrypt Once**.
+
+### Verify Recipient Registration
+
+The recipient API can be tested from Swagger or PowerShell:
+
+```powershell
+Invoke-RestMethod -Method Post `
+   -Uri http://127.0.0.1:8000/recipients/register `
+   -ContentType "application/json" `
+   -Body '{"display_name":"Alice","organization":"Example Org","role":"Reviewer"}'
+```
+
+The response should contain a `recipient_id` and `certificate_serial`. This creates local PQC keys and a signed recipient certificate in the local keystore.
+
+### Run the Automated Tests
+
+From the repository root with the virtual environment activated:
+
+```powershell
+pytest -v
+```
+
+To run only the watermark attack tests:
+
+```powershell
+pytest tests/attacks/test_attacks.py -v
+```
+
+The test suite covers direct PDF copies, screenshots, JPEG compression, print-scan simulation, and the expected failure for retyped text.
+
+### Current Prototype Boundaries
+
+The **Sender** screen and the API smoke tests are functional. The **Recipient** buttons, **Attack Lab** button, and **Ledger Explorer** screen are currently UI placeholders. The forensic endpoint uses a placeholder fingerprint list, so a complete recipient-to-ledger-to-leak demonstration requires those integration paths to be implemented before it can be treated as production behavior.
 
 ## Testing
 
