@@ -1,0 +1,34 @@
+version: '3.7'
+
+services:
+  # Python Backend
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+    volumes:
+      - .:/app
+    depends_on:
+      - fabric-placeholder
+
+  # Streamlit UI
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: streamlit run app.py
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      - api
+
+  # Fabric placeholders for Phase 8
+  fabric-placeholder:
+    image: alpine:latest
+    command: ["sleep", "infinity"]
+
+# Networks and volumes will be expanded in Phase 8 for SmartBFT Fabric.

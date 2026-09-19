@@ -18,11 +18,26 @@
 
 ---
 
-## 📌 Executive Summary
+## Contents
+
+- [Overview](#overview)
+- [How It Works](#how-it-works)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Repository Layout](#repository-layout)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Running the System](#running-the-system)
+- [Testing](#testing)
+- [Demonstration Flow](#demonstration-flow)
+- [Security Boundaries](#security-boundaries)
+- [License](#license)
+
+## Overview
 
 Organizations handling sensitive intelligence, board resolutions, and classified materials face an asymmetry: **documents must be distributed to multiple parties to be useful, but once distributed, any recipient can leak them anonymously.** Traditional watermarking is easily stripped, and centralized audit logs are vulnerable to administrative tampering or denial of receipt.
 
-**PRAMAAN** solves this challenge through a mathematically grounded, verifiable pipeline:
+**PRAMAAN** addresses this challenge with a verifiable pipeline:
 1. **Encrypt Once, Distribute Anywhere:** Uses `AES-256-GCM` with post-quantum `ML-KEM-768` key-wrapping so every recipient accesses the identical encrypted ciphertext.
 2. **Cryptographic Proof of Decryption:** Decryption keys are released only after the recipient signs an `ML-DSA-65` digital request committed to an offline **Hyperledger Fabric v3 SmartBFT** permissioned ledger.
 3. **Defense-in-Depth Forensic Fingerprinting:** An imperceptible, 3-layer forensic watermark (Metadata, Glyph Spacing, and 2D-DWT Spread-Spectrum) binds the rendered document to the specific recipient and session ID.
@@ -30,7 +45,14 @@ Organizations handling sensitive intelligence, board resolutions, and classified
 
 ---
 
-## 🏛️ System Architecture
+## How It Works
+
+1. **Encrypt once:** A document is encrypted with `AES-256-GCM`. The same ciphertext can be distributed to every authorized recipient.
+2. **Authorize decryption:** A recipient submits an `ML-DSA-65`-signed decryption request. The request is recorded on the permissioned Fabric ledger before the key is released.
+3. **Fingerprint the output:** The decrypted document receives three forensic watermark layers bound to the recipient and decryption session.
+4. **Verify a leak:** The forensic engine extracts the fingerprint, looks up the corresponding ledger event, verifies the signature, and attributes the document to the recorded recipient and session.
+
+## Architecture
 
 ```
                     ┌──────────────────────────────────────────────┐
@@ -60,7 +82,7 @@ Organizations handling sensitive intelligence, board resolutions, and classified
 
 ---
 
-## 🔐 Core Technological Innovations
+## Technology Stack
 
 | Layer | Technology | Security Function |
 | :--- | :--- | :--- |
@@ -74,7 +96,7 @@ Organizations handling sensitive intelligence, board resolutions, and classified
 
 ---
 
-## 📂 Repository Structure
+## Repository Layout
 
 ```
 pramaan/
@@ -86,7 +108,7 @@ pramaan/
 ├── app.py                    # Multi-role Streamlit UI (Dashboard, Sender, Recipient, Investigator)
 ├── config/                   # Configuration schemas and environment settings
 ├── core/                     # Core hashing and deterministic serialization utilities
-├── crypto/                   # Cryptographic engine
+├── core/crypto/              # Cryptographic engine
 │   ├── aes_gcm.py            # AES-256-GCM symmetric encryption
 │   ├── mlkem.py              # ML-KEM-768 key encapsulation (liboqs)
 │   ├── mldsa.py              # ML-DSA-65 digital signature signing/verification
@@ -120,20 +142,25 @@ pramaan/
 
 ---
 
-## 🚀 Setup & Installation Guide
+## Requirements
 
 This project is built for **Windows with WSL2 / Docker Desktop**, designed to run **completely air-gapped and offline** without external cloud dependencies.
 
-### Prerequisites
 - **Windows 10 / 11** with PowerShell 5.1+
 - **Docker Desktop** (running and set to Linux containers)
 - **WSL2** with Ubuntu installed (`wsl --install -d Ubuntu`)
 - **Python 3.12+**
 - **Node.js 18+** (inside WSL2 for the Fabric Gateway adapter)
 
+The system is designed to run locally and offline after its dependencies and Fabric binaries are available.
+
+## Installation
+
+The commands below assume the repository is located at `C:\Users\agraw\Music\PS02\pramaan` on Windows and `/mnt/c/Users/agraw/Music/PS02/pramaan` inside WSL2.
+
 ---
 
-### Phase 1: Start Hyperledger Fabric SmartBFT (in WSL2 / Ubuntu)
+### 1. Start Hyperledger Fabric
 
 Open your **Ubuntu Terminal**:
 
@@ -149,7 +176,7 @@ bash fabric/scripts/setup_fabric.sh
 
 ---
 
-### Phase 2: Start the Fabric Gateway Adapter (in WSL2 / Ubuntu)
+### 2. Start the Fabric Gateway Adapter
 
 In the Ubuntu Terminal:
 
@@ -166,7 +193,7 @@ You will see: `Fabric Gateway Adapter running on port 3000`.
 
 ---
 
-### Phase 3: Setup Python Environment & Backend (in Windows PowerShell)
+### 3. Set Up the Python Environment and API
 
 Open **Windows PowerShell**:
 
@@ -188,7 +215,7 @@ Backend API will be live at `http://127.0.0.1:8000`.
 
 ---
 
-### Phase 4: Launch the Streamlit Dashboard (in a second Windows PowerShell)
+### 4. Launch the Streamlit Dashboard
 
 Open a **new Windows PowerShell window**:
 
@@ -203,7 +230,13 @@ Your browser will automatically open `http://localhost:8501`.
 
 ---
 
-## 🧪 Verification & Attack Resilience Lab
+## Running the System
+
+Once the services are running, use the Streamlit dashboard at `http://localhost:8501`. The FastAPI service is available at `http://127.0.0.1:8000`; its interactive API documentation is at `http://127.0.0.1:8000/docs`.
+
+The dashboard provides sender, recipient, dashboard, and investigator workflows. Fabric, the gateway adapter, the FastAPI service, and Streamlit must remain running for the complete end-to-end flow.
+
+## Testing
 
 To run the automated suite evaluating watermark survival across simulated real-world adversarial attacks:
 
@@ -225,7 +258,7 @@ pytest tests/attacks/test_attacks.py -v
 
 ---
 
-## 🎯 5-Minute Jury Demonstration Script
+## Demonstration Flow
 
 1. **Sender Encryption:** Under the **Sender Tab**, upload a confidential PDF and click **"Encrypt Once"**. Note the unique document hash and AES-256 ciphertext.
 2. **Multi-Recipient Distribution:** Notice that Recipient A (Alice) and Recipient B (Bob) receive the identical ciphertext.
@@ -241,7 +274,7 @@ pytest tests/attacks/test_attacks.py -v
 
 ---
 
-## ⚖️ Technical Boundaries & Honest Claims
+## Security Boundaries
 
 In accordance with strict cryptographic evaluation standards:
 - **What PRAMAAN Proves:** PRAMAAN cryptographically attributes a leaked document to a specific **recipient identity and decryption session event** with non-repudiation backed by post-quantum signatures and BFT consensus.
@@ -249,7 +282,7 @@ In accordance with strict cryptographic evaluation standards:
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
@@ -257,6 +290,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 <div align="center">
 <b>Built with conviction for the Smart India Hackathon</b>
-</div>#   P r a m a a n  
- #   P r a m a a n  
- 
+</div>

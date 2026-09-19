@@ -1,0 +1,86 @@
+# ==============================================================================
+# PRAMAAN - Git Ignore Configuration
+# ==============================================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+venv*/
+env/
+env*/
+ENV/
+.venv/
+
+# Environment Variables & Secrets (CRITICAL FOR AIR-GAP & PQC SAFETY)
+.env
+.env.local
+.env.*.local
+*.env
+
+# Local Keystore, Keys, Private Certificates, and Databases
+data/
+*.sqlite
+*.sqlite3
+*.db
+*.bin
+*.key
+*.pem
+!fabric/config/**/*.pem
+!docs/**/*.png
+!docs/**/*.jpg
+
+# Node.js / Fabric Adapter
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+fabric_adapter/node_modules/
+
+# Hyperledger Fabric Local Binaries, Samples & Crypto Material
+bin/
+builders/
+install-fabric.sh
+fabric-samples/
+fabric/network/organizations/peerOrganizations/
+fabric/network/organizations/ordererOrganizations/
+fabric/network/channel-artifacts/
+*.tar.gz
+*.block
+*.tx
+
+# Operating System & IDEs
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
